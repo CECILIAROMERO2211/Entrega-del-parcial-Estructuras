@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/ceciliaromerogranados/Desktop/Entrega del parcial - Ejercicios Listas, Doblemente ligadas, Stacks y Queues",
+      "program": "/Users/ceciliaromerogranados/Desktop/Entrega del parcial - Ejercicios Listas, Doblemente ligadas, Stacks y Queues/build/Debug/outDebug"
+    }
+  ]
+}
