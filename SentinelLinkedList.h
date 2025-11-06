@@ -13,109 +13,202 @@
 #include <iostream>
 using namespace std;
 
-// Esta lista sirve para guardar datos, por ejemplo números o palabras, y los organiza uno detrás de otro.
-template <typename T> // Esto permite que funcione con distintos tipos de datos.
-class SentinelLinkedList {
-private:
-    // Cada elemento que se guarda dentro de la lista es una "parte" que contiene el dato
-    // y sabe quién está antes y quién está después.
-    class Parte {
-    public:
-        // Aquí se crea una nueva parte con un dato 
-        Parte(T _dato) : dato(_dato), siguiente(nullptr), anterior(nullptr) {}
+// Esta clase crea una lista doblemente ligada, al anterior y al siguiente). Se usa un "centinela", que es un nodo especial
+// que marca el inicio y el final de la lista.
+template <typename T>
+class SentinelLinkedList
+{
+public:
+    // Constructor es el que se ejecuta cuando se crea la lista.
+    // Crea el centinela y lo conecta consigo mismo, lo que significa
+    // que la lista empieza vacía.
+    SentinelLinkedList()
+    {
+        centinela = new Elemento(T{});     // se crea el centinela sin datos reales
+        centinela->siguiente = centinela;  // el siguiente del centinela apunta a él mismo
+        centinela->anterior = centinela;   // el anterior también apunta a él mismo
+        tamano = 0;                        // la lista empieza con 0 elementos
+    }
 
-        T dato;           // Es el valor que queremos guardar 
-        Parte* siguiente; // Apunta a la parte que está después en la lista.
-        Parte* anterior;  // Apunta a la parte que está antes en la lista.
+    // Destructor: se ejecuta cuando la lista se elimina.
+    // Libera toda la memoria usada por los elementos.
+    ~SentinelLinkedList()
+    {
+        Elemento* actual = centinela->siguiente;  // empezamos desde el primer elemento real
+
+        // borramos todos los elementos hasta llegar al centinela otra vez
+        while (actual != centinela)
+        {
+            Elemento* borrar = actual;      // guardamos el elemento actual
+            actual = actual->siguiente;     // avanzamos al siguiente
+            delete borrar;                  // borramos el actual de memoria
+        }
+
+        delete centinela;                   // al final borramos el centinela
+        cout << "La lista fue eliminada correctamente." << endl;
+    }
+
+    // Agrega un nuevo elemento al final de la lista.
+    void Append(T valor)
+    {
+        Elemento* nuevo = new Elemento(valor);  // se crea un nuevo elemento con el valor recibido
+
+        // Conectamos el nuevo elemento al final
+        centinela->anterior->siguiente = nuevo; // el último elemento apunta al nuevo
+        nuevo->anterior = centinela->anterior;  // el nuevo apunta hacia atrás al último
+        centinela->anterior = nuevo;            // el centinela apunta hacia atrás al nuevo
+        nuevo->siguiente = centinela;           // el nuevo apunta hacia adelante al centinela
+
+        tamano++;                               // aumentamos el número de elementos
+    }
+
+    // Quita el último elemento y devuelve su valor.
+    T PopBack()
+    {
+        if (tamano == 0)  // si la lista está vacía
+        {
+            cout << "No se puede quitar porque la lista está vacía." << endl;
+            return T{};   // se devuelve un valor vacío
+        }
+
+        Elemento* borrar = centinela->anterior;  // el último elemento es el que está antes del centinela
+        T valor = borrar->dato;                  // guardamos el valor
+        EliminarElemento(borrar);                // eliminamos el nodo
+        return valor;                            // devolvemos el valor
+    }
+
+    // Agrega un nuevo elemento al principio de la lista.
+    void PushFront(T valor)
+    {
+        Elemento* nuevo = new Elemento(valor);    // se crea un nuevo elemento
+
+        // Se conecta el nuevo elemento como primero
+        nuevo->siguiente = centinela->siguiente;  // el nuevo apunta al primer elemento actual
+        centinela->siguiente->anterior = nuevo;   // el primer elemento apunta al nuevo hacia atrás
+        centinela->siguiente = nuevo;             // el centinela apunta al nuevo como siguiente
+        nuevo->anterior = centinela;              // el nuevo apunta hacia atrás al centinela
+
+        tamano++;                                 // se incrementa el tamaño
+    }
+
+    // Quita el primer elemento de la lista y devuelve su valor.
+    T PopFront()
+    {
+        if (tamano == 0)  // si la lista está vacía
+        {
+            cout << "No se puede quitar el primero porque la lista está vacía." << endl;
+            return T{};
+        }
+
+        Elemento* borrar = centinela->siguiente;  // el primer elemento está después del centinela
+        T valor = borrar->dato;                   // guardamos su valor
+        EliminarElemento(borrar);                 // lo eliminamos
+        return valor;                             // devolvemos el valor quitado
+    }
+
+    // Devuelve el primer valor sin eliminarlo.
+    T Front()
+    {
+        if (tamano == 0)
+        {
+            cout << "La lista está vacía, no hay elementos al inicio." << endl;
+            return T{};
+        }
+        return centinela->siguiente->dato; // devuelve el valor del primer elemento
+    }
+
+    // Devuelve el último valor sin eliminarlo.
+    T Back()
+    {
+        if (tamano == 0)
+        {
+            cout << "La lista está vacía, no hay elementos al final." << endl;
+            return T{};
+        }
+        return centinela->anterior->dato; // devuelve el valor del último elemento
+    }
+
+    // Revisa si un valor está dentro de la lista.
+    bool Contiene(T valor)
+    {
+        Elemento* encontrado = Buscar(valor);  // busca el valor
+        return (encontrado != nullptr);        // devuelve true si lo encontró
+    }
+
+    // Devuelve el valor que está en cierta posición (0, 1, 2…)
+    T ObtenerPorIndice(size_t indice)
+    {
+        if (indice >= tamano)  // si el número es mayor al tamaño actual
+        {
+            cout << "El número de posición no es válido: " << indice << endl;
+            return T{};
+        }
+
+        Elemento* actual = centinela->siguiente;  // empezamos desde el primer elemento
+        for (int i = 0; i < indice; i++)          // avanzamos hasta el lugar indicado
+            actual = actual->siguiente;
+
+        return actual->dato;                      // devolvemos el valor encontrado
+    }
+
+    // Borra el primer elemento que tenga el valor indicado.
+    void BorrarPorValor(T valor)
+    {
+        Elemento* borrar = Buscar(valor);  // buscamos el valor dentro de la lista
+        if (borrar == nullptr)             // si no se encuentra
+        {
+            cout << "No se encontró el valor: " << valor << endl;
+            return;
+        }
+
+        EliminarElemento(borrar);          // si se encuentra, se borra
+    }
+
+private:
+    // Clase que representa cada elemento de la lista.
+    class Elemento
+    {
+    public:
+        Elemento(T _dato)
+        {
+            dato = _dato;          // se guarda el dato dentro del elemento
+            siguiente = nullptr;   // al principio no apunta a nadie
+            anterior = nullptr;    // tampoco apunta a nadie hacia atrás
+        }
+
+        T dato;                 // el valor del elemento
+        Elemento* siguiente;    // dirección del siguiente elemento
+        Elemento* anterior;     // dirección del anterior elemento
     };
 
-    Parte* centinela; // Es una parte vacía que marca el inicio y el final de la lista. Nunca se borra.
-    int cantidad;     // Guarda cuántos datos hay en la lista.
+    // Busca un valor dentro de la lista.
+    // Si no lo encuentra, devuelve nullptr.
+    Elemento* Buscar(T valor)
+    {
+        Elemento* actual = centinela->siguiente;  // empezamos desde el primer elemento
 
-public:
-                           
-    SentinelLinkedList() { // Cuando se crea la lista, se deja vacía y preparada para usarse.
-        centinela = new Parte(T{});  // Se crea la parte “centinela” vacía.
-        centinela->siguiente = centinela; // Al principio apunta a sí misma, porque aún no hay datos.
-        centinela->anterior = centinela;  // aqui se considera que la parte que está antes de ella, es ella misma
-        cantidad = 0;                     // Se indica que la lista tiene 0 elementos.
-    }
-
-   
-    ~SentinelLinkedList() { // Cuando la lista se borra, se eliminan todas las partes que tiene para no gastar memoria.
-        Parte* actual = centinela->siguiente; // Empezamos desde la primera parte real.
-        while (actual != centinela) {         // Recorremos toda la lista hasta volver al centinela.
-            Parte* temporal = actual;         // Guardamos la parte actual.
-            actual = actual->siguiente;       // Avanzamos a la siguiente.
-            delete temporal;                  // Borramos la parte que acabamos de pasar.
-        }
-        delete centinela;                     // Al final, borramos el centinela.
-    }
-
-
-    void AgregarFinal(T valor) { // Esta función agrega un dato al final de la lista.
-        Parte* nueva = new Parte(valor);   // Creamos una nueva parte con el valor que nos dan.
-        centinela->anterior->siguiente = nueva; // La última parte que había se conecta con la nueva.
-        nueva->anterior = centinela->anterior;  // La nueva parte sabe quién estaba antes.
-        nueva->siguiente = centinela;           // Al final apunta al centinela que define el final.
-        centinela->anterior = nueva;            // El centinela ahora reconoce a esta como la última parte.
-        cantidad++;                             // Aumentamos la cantidad de elementos.
-    }
-
-    // Esta función agrega un dato al inicio de la lista.
-    void AgregarInicio(T valor) {
-        Parte* nueva = new Parte(valor);        // Se crea una nueva parte con el valor que se quiere guardar.
-        nueva->siguiente = centinela->siguiente; // La nueva parte se conecta con la que era la primera.
-        nueva->anterior = centinela;             // Su anterior es el centinela en la parte inicial.
-        centinela->siguiente->anterior = nueva;  // La antigua primera se conecta hacia atrás con la nueva.
-        centinela->siguiente = nueva;            // El centinela apunta a la nueva como la primera parte.
-        cantidad++;                              // Se suma uno a la cantidad de datos guardados.
-    }
-
-    // Esta función quita el primer dato de la lista y lo devuelve.
-    T QuitarInicio() {
-        if (cantidad == 0) {                      // Si no hay datos en la lista...
-            cout << "No hay datos para quitar." << endl;
-            return T{};                           // Se devuelve un valor vacío.
+        while (actual != centinela)               // recorremos la lista
+        {
+            if (actual->dato == valor)            // si encontramos el valor
+                return actual;                    // devolvemos la posición
+            actual = actual->siguiente;           // avanzamos al siguiente
         }
 
-        Parte* aBorrar = centinela->siguiente;    // Tomamos la primera parte real.
-        T valor = aBorrar->dato;                  // Guardamos el dato que tiene.
-        centinela->siguiente = aBorrar->siguiente; // El centinela ahora apunta al segundo como primero.
-        aBorrar->siguiente->anterior = centinela;  // El nuevo primero se conecta hacia atrás con el centinela.
-        delete aBorrar;                            // Borramos la parte que se quitó.
-        cantidad--;                                // Restamos uno a la cantidad total.
-        return valor;                              // Devolvemos el dato que se quitó.
+        return nullptr;                           // si no lo encontramos
     }
 
-    // Esta función quita el último dato de la lista.
-    T QuitarFinal() {
-        if (cantidad == 0) {                 // Si la lista está vacía, no se puede quitar nada.
-            cout << "No hay datos en la lista." << endl;
-            return T{};                      // Devuelve un valor vacío.
-        }
-
-        Parte* aBorrar = centinela->anterior; // Tomamos la última parte de la lista.
-        T valor = aBorrar->dato;              // Guardamos el dato que tenía.
-        aBorrar->anterior->siguiente = centinela; // La parte anterior ahora apunta al centinela.
-        centinela->anterior = aBorrar->anterior;  // El centinela reconoce al nuevo último.
-        delete aBorrar;                            // Borramos la parte que se quitó.
-        cantidad--;                                // Restamos uno a la cantidad total.
-        return valor;                              // Devolvemos el dato que se quitó.
+    // Elimina un elemento y reconecta los de alrededor.
+    void EliminarElemento(Elemento* borrar)
+    {
+        borrar->anterior->siguiente = borrar->siguiente; // el de atrás apunta al siguiente
+        borrar->siguiente->anterior = borrar->anterior; // el de adelante apunta al de atrás
+        delete borrar;                                  // liberamos la memoria del eliminado
+        tamano--;                                       // reducimos el tamaño
     }
 
-   
-    T VerPrimero() { // Esta función muestra cuál es el primer dato de la lista, sin quitarlo.
-        if (cantidad == 0) {                 // Si no hay datos, se avisa.
-            cout << "La lista está vacía." << endl;
-            return T{};                      // Se devuelve algo vacío.
-        }
-        return centinela->siguiente->dato;   // Devuelve el primer dato que hay guardado.
-    }
-
-    
-    int CuantosHay() { // Esta función dice cuántos datos hay en la lista en este momento.
-        return cantidad; // Devuelve el número total de elementos.
-    }
+    Elemento* centinela; // nodo especial que marca el inicio y el final
+    int tamano;          // cantidad de elementos que tiene la lista
 };
 
+// Declaración de la función de demostración (definida en el .cpp)
+void DemostracionSentinelLinkedList();
