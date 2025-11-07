@@ -8,118 +8,194 @@
 // Alumnos: Cecilia Romero Granados, Alexis Jeshua Arrona
 
 #pragma once
-#include <iostream>  // Permite mostrar mensajes o usar strings
-#include <cmath>     // Permite usar funciones matemáticas como tan() y PI
+#include <iostream>  // Sirve para mostrar mensajes en consola
+#include <cmath>     // Sirve para usar funciones matemáticas como tan() o PI
 using namespace std;
 
 // CLASE BASE: FIGURA
-// Esta clase es la base de todas las figuras.
-// Sirve como modelo general para que las demás figuras hereden sus funciones.
+// Esta clase es el modelo general. Todas las figuras
+// heredan de aquí, porque todas comparten las funciones CalcularArea y CalcularPerimetro.
 class Figura {
 public:
-    // Se crea la figura con un nombre 
-    Figura(string n) : nombre(n) {}
+    Figura(string n) : nombre(n) {} // Guarda el nombre de la figura
+    virtual ~Figura() {}            // Destructor virtual (necesario para herencia)
 
-    // Destructor virtual: se llama automáticamente al borrar una figura
-    virtual ~Figura() {}
-
-  // Estas funciones se dejan vacías aquí, porque cada tipo de figura, tiene su propia forma de calcular el área y el perímetro.
+    // Estas funciones son "virtuales puras", eso significa que
+    // las clases hijas están obligadas a implementar su propia versión.
     virtual float CalcularArea() = 0;
     virtual float CalcularPerimetro() = 0;
 
-    // Devuelve el nombre de la figura y esta sirve para identificarla
+    // Devuelve el nombre de la figura (por ejemplo “Círculo” o “Cubo”)
     const string& ObtenerNombreDeFigura() { return nombre; }
 
 protected:
-    string nombre; // Aquí se guarda el nombre de la figura
+    string nombre; // Se guarda el nombre aquí
 };
 
-// CLASE HIJA: CÍRCULO
-// Representa un círculo con un radio.
+// CLASE CIRCULO
+// Representa un círculo con su radio.
 class Circulo : public Figura {
 private:
-    float radio; // El tamaño del radio
+    float radio; // guarda el valor del radio
 public:
-    Circulo(float r) : Figura("Círculo"), radio(r) {}
+    Circulo(float r) : Figura("Círculo"), radio(r) {} // se guarda el radio
 
-    // Fórmula del área: PI * radio²
-    float CalcularArea() override { return 3.1416f * radio * radio; }
+    // CalcularArea
+    // Fórmula del área de un círculo
+    float CalcularArea() override { 
+        return 3.1416f * radio * radio; // multiplica PI * radio * radio
+    }
 
-    // Fórmula del perímetro (circunferencia): 2 * PI * radio
-    float CalcularPerimetro() override { return 2 * 3.1416f * radio; }
+    // CalcularPerimetro
+    // Fórmula del perímetro: 2 * PI * radio
+    float CalcularPerimetro() override { 
+        return 2 * 3.1416f * radio; // multiplica 2 * PI * radio
+    }
 };
 
-// CLASE HIJA: CUADRADO
-// Representa un cuadrado regular con todos sus lados iguales.
+
+// CLASE CUADRADO
+// Representa un cuadrado donde todos los lados son iguales.
 class Cuadrado : public Figura {
 protected:
-    float lado; // Tamaño de un lado del cuadrado
+    float lado; // mide cuánto vale un lado
 public:
-    Cuadrado(float l) : Figura("Cuadrado"), lado(l) {}
+    Cuadrado(float l) : Figura("Cuadrado"), lado(l) {} // se guarda el lado
 
-    // Área = lado * lado
-    float CalcularArea() override { return lado * lado; }
+    // CalcularArea
+    // Fórmula: lado * lado
+    float CalcularArea() override { 
+        return lado * lado; // multiplica el lado por sí mismo
+    }
 
-    // Perímetro = 4 * lado
-    float CalcularPerimetro() override { return 4 * lado; }
+    // CalcularPerimetro
+    // Fórmula: 4 * lado
+    float CalcularPerimetro() override { 
+        return 4 * lado; // multiplica el lado por 4 (4 lados iguales)
+    }
 };
 
-// CLASE HIJA DE CUADRADO: CUBO
-// Representa un cubo. Hereda del cuadrado.
+// CLASE CUBO (hereda de Cuadrado
+// Representa un cubo en 3D, o sea un cuadrado con volumen.
 class Cubo : public Cuadrado {
 public:
-    Cubo(float l) : Cuadrado(l) {}
+    Cubo(float l) : Cuadrado(l) {} // el lado se pasa al constructor del cuadrado
 
-    // Volumen del cubo = lado³
-    float Volumen() { return lado * lado * lado; }
+    // Volumen, Calcula el volumen del cubo usando la fórmula: lado³
+    float Volumen() { 
+        return lado * lado * lado; // multiplica el lado 3 veces
+    }
 
-    // Superficie total = 6 * lado²
-    float Surface() { return 6 * lado * lado; }
+    // CalcularArea
+    // Calcula el área total de un cubo (6 caras iguales)
+    float CalcularArea() override { 
+        return 6 * lado * lado; // multiplica 6 * lado² (cada cara tiene área lado²)
+    }
+
+    // CalcularPerimetro
+    // Calcula el perímetro total (suma de las 12 aristas del cubo)
+    float CalcularPerimetro() override { 
+        return 12 * lado; // multiplica el lado por 12 (porque un cubo tiene 12 aristas)
+    }
 };
 
-// CLASE HIJA: FIGURA DE N LADOS
-// Representa una figura con varios lados iguales. 
+// CLASE FIGURA DE N LADOS
+// Representa una figura regular 
 class FiguraNLados : public Figura {
 private:
-    int n;      // Número de lados
-    float lado; // Longitud de cada lado
+    int n;      // número de lados
+    float lado; // longitud de cada lado
 public:
-    FiguraNLados(int _n, float _l) : Figura("FiguraNLados"), n(_n), lado(_l) {}
+    // Constructor 
+    FiguraNLados(int _n, float _l) : Figura("Figura de N lados"), n(_n), lado(_l)
+    {
+        // Si la figura tiene menos de 3 lados, no puede existir
+        if (n < 3)
+        {
+            cout << "Advertencia: una figura necesita al menos 3 lados. Se ajustará a 3." << endl;
+            n = 3; // se cambia a 3 para evitar errores
+        }
 
-    // Área aproximada usando una fórmula general para figuras regulares
-    float CalcularArea() override {
-        return (n * lado * lado) / (4 * tan(3.1416f / n));
+        // Si el valor del lado es 0 o negativo, no tiene sentido
+        if (lado <= 0)
+        {
+            cout << "Advertencia: el lado debe ser positivo. Se ajustará a 1." << endl;
+            lado = 1; // se corrige el valor del lado
+        }
     }
 
-    // Perímetro = n * lado
-    float CalcularPerimetro() override { return n * lado; }
+    // CalcularArea
+    // Fórmula general del área de un polígono regular
+    float CalcularArea() override {
+        return (n * lado * lado) / (4 * tan(3.1416f / n)); // se aplica la fórmula general
+    }
+
+    // CalcularPerimetro
+    // Suma todos los lados: n * lado
+    float CalcularPerimetro() override { 
+        return n * lado; // multiplica el número de lados por la longitud de uno
+    }
 };
 
 
-// CLASE HIJA: LÍNEA
-// Representa una línea compuesta por varias partes que pueden medir diferente.
+// CLASE LINEA
+// Representa una línea formada por varios segmentos unidos.
 class Linea : public Figura {
 private:
-    float* segmentos; // Arreglo para guardar cada segmento
-    int size;         // Cuántos segmentos tiene
+    float* segmentos; // arreglo para guardar las longitudes de cada segmento
+    int size;         // cuántos segmentos hay
 public:
-    // Se crea la línea copiando los segmentos dados
-    Linea(float* arr, int n) : Figura("Línea"), size(n) {
-        segmentos = new float[n]; // Se reserva espacio en memoria
-        for (int i = 0; i < n; i++) segmentos[i] = arr[i]; // Se copian los valores
+    // Constructor 
+    Linea(float* arr, int n) : Figura("Línea"), size(n)
+    {
+        // Validamos que tenga al menos un segmento
+        if (size <= 0)
+        {
+            cout << "Advertencia: la línea necesita al menos un segmento. Se creará una de 1 unidad." << endl;
+            size = 1; // se fuerza a tener un segmento
+            segmentos = new float[1]; // reservamos memoria para un solo segmento
+            segmentos[0] = 1.0f; // ese segmento mide 1 unidad
+            return; // salimos del constructor
+        }
+
+        // Reservamos memoria para los segmentos
+        segmentos = new float[size];
+
+        // Copiamos cada valor recibido
+        for (int i = 0; i < size; i++)
+        {
+            // Si algún segmento tiene un valor negativo o cero, se corrige
+            if (arr[i] <= 0)
+            {
+                cout << "Advertencia: segmento negativo o nulo, se ajustará a 1." << endl;
+                segmentos[i] = 1.0f; // lo reemplazamos por 1
+            }
+            else
+            {
+                segmentos[i] = arr[i]; // copiamos el valor normal
+            }
+        }
     }
 
-    // Cuando la línea se borra, se libera la memoria usada
-    ~Linea() { delete[] segmentos; }
+    // Destructor 
+    // Libera la memoria que se usó para guardar los segmentos.
+    ~Linea() { 
+        delete[] segmentos; // borra el arreglo dinámico
+    }
 
-    // Una línea no tiene área, así que su resultado siempre es 0
-    float CalcularArea() override { return 0; }
+    // CalcularArea 
+    // Una línea no tiene área (es 1D), así que devuelve 0.
+    float CalcularArea() override { 
+        return 0; 
+    }
 
-    // El perímetro es la suma de todos los segmentos
+    // CalcularPerimetro
+    // Suma todos los segmentos para obtener la longitud total.
     float CalcularPerimetro() override {
-        float total = 0;
-        for (int i = 0; i < size; i++) total += segmentos[i];
-        return total;
+        float total = 0; // variable para acumular la suma
+        for (int i = 0; i < size; i++)
+            total += segmentos[i]; // se suma cada segmento uno por uno
+        return total; // devuelve la longitud total de la línea
     }
 };
 
