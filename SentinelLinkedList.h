@@ -13,202 +13,132 @@
 #include <iostream>
 using namespace std;
 
-// Esta clase crea una lista doblemente ligada, al anterior y al siguiente). Se usa un "centinela", que es un nodo especial
-// que marca el inicio y el final de la lista.
+// Clase plantilla de lista doblemente ligada con nodo centinela (NIL).
+// El nodo NIL no guarda un dato "real"; sirve como marcador de inicio/fin.
+// Ventaja: evita if's especiales para "lista vacía", "primer/último", etc.
+// Tiempo de varias operaciones como Append/PushFront es O(1).
 template <typename T>
 class SentinelLinkedList
 {
 public:
-    // Constructor es el que se ejecuta cuando se crea la lista.
-    // Crea el centinela y lo conecta consigo mismo, lo que significa
-    // que la lista empieza vacía.
+    // Constructor: crea el nodo NIL y lo hace apuntarse a sí mismo.
+    // La lista queda vacía porque NIL->next == NIL y NIL->prev == NIL.
     SentinelLinkedList()
     {
-        centinela = new Elemento(T{});     // se crea el centinela sin datos reales
-        centinela->siguiente = centinela;  // el siguiente del centinela apunta a él mismo
-        centinela->anterior = centinela;   // el anterior también apunta a él mismo
-        tamano = 0;                        // la lista empieza con 0 elementos
+        NIL = new Node(T{}); // crea NIL con valor por defecto de T (no importa su contenido)
+        NIL->next = NIL;     // hacia adelante apunta a sí mismo: lista vacía
+        NIL->prev = NIL;     // hacia atrás también se autoapunta
+        count = 0;           // no hay elementos "reales" aún
     }
 
-    // Destructor: se ejecuta cuando la lista se elimina.
-    // Libera toda la memoria usada por los elementos.
+    // Destructor: libera todos los nodos reales y al final libera también a NIL.
     ~SentinelLinkedList()
     {
-        Elemento* actual = centinela->siguiente;  // empezamos desde el primer elemento real
-
-        // borramos todos los elementos hasta llegar al centinela otra vez
-        while (actual != centinela)
+        // Empezamos desde el primer nodo real (NIL->next).
+        Node* nodoActual = NIL->next;
+        // Recorremos hasta volver a NIL (momento en que no quedan reales).
+        while (nodoActual != NIL)
         {
-            Elemento* borrar = actual;      // guardamos el elemento actual
-            actual = actual->siguiente;     // avanzamos al siguiente
-            delete borrar;                  // borramos el actual de memoria
+            Node* nodoABorrar = nodoActual; // guardamos el que vamos a eliminar
+            nodoActual = nodoActual->next;  // avanzamos ANTES de borrar para no perder el enlace
+            delete nodoABorrar;             // liberamos memoria del nodo real
         }
 
-        delete centinela;                   // al final borramos el centinela
-        cout << "La lista fue eliminada correctamente." << endl;
+        delete NIL; // por último liberamos el centinela
+        cout << "Sentinel linked list destruida con éxito" << endl;
     }
 
-    // Agrega un nuevo elemento al final de la lista.
-    void Append(T valor)
+    // Append: inserta al FINAL en O(1) usando NIL->prev como "último actual".
+    void Append(T value)
     {
-        Elemento* nuevo = new Elemento(valor);  // se crea un nuevo elemento con el valor recibido
+        Node* newNode = new Node(value); // se crea el nuevo nodo con el valor
 
-        // Conectamos el nuevo elemento al final
-        centinela->anterior->siguiente = nuevo; // el último elemento apunta al nuevo
-        nuevo->anterior = centinela->anterior;  // el nuevo apunta hacia atrás al último
-        centinela->anterior = nuevo;            // el centinela apunta hacia atrás al nuevo
-        nuevo->siguiente = centinela;           // el nuevo apunta hacia adelante al centinela
+        // Conexiones (en orden lógico):
+        // 1) El antiguo último (NIL->prev) ahora apunta hacia adelante al nuevo
+        NIL->prev->next = newNode;
 
-        tamano++;                               // aumentamos el número de elementos
+        // 2) El nuevo apunta hacia atrás al antiguo último
+        newNode->prev = NIL->prev;
+
+        // 3) Actualizamos "último": NIL->prev ahora debe ser el nuevo
+        NIL->prev = newNode;
+
+        // 4) El nuevo hacia adelante apunta a NIL (porque es el último)
+        newNode->next = NIL;
+
+        // 5) Aumentamos el conteo
+        count++;
     }
 
-    // Quita el último elemento y devuelve su valor.
+    // PopBack: quita el ÚLTIMO y regresa su valor.
     T PopBack()
     {
-        if (tamano == 0)  // si la lista está vacía
+        // Si no hay elementos reales, no se puede extraer.
+        if (count == 0)
         {
-            cout << "No se puede quitar porque la lista está vacía." << endl;
-            return T{};   // se devuelve un valor vacío
+            cout << "Error, trataron de hacer PopBack de una lista vacía." << endl;
+            return T{}; // valor neutro de T
         }
 
-        Elemento* borrar = centinela->anterior;  // el último elemento es el que está antes del centinela
-        T valor = borrar->dato;                  // guardamos el valor
-        EliminarElemento(borrar);                // eliminamos el nodo
-        return valor;                            // devolvemos el valor
+        // El último real es NIL->prev.
+        Node* nodoABorrar = NIL->prev;
+        T valorDelNodoABorrar = nodoABorrar->data; // guardamos su dato para regresarlo
+
+        // Reutilizamos la función de borrado (reconecta punteros y decrementa count).
+        Delete(nodoABorrar);
+
+        return valorDelNodoABorrar; // devolvemos el dato que tenía
     }
 
-    // Agrega un nuevo elemento al principio de la lista.
-    void PushFront(T valor)
-    {
-        Elemento* nuevo = new Elemento(valor);    // se crea un nuevo elemento
-
-        // Se conecta el nuevo elemento como primero
-        nuevo->siguiente = centinela->siguiente;  // el nuevo apunta al primer elemento actual
-        centinela->siguiente->anterior = nuevo;   // el primer elemento apunta al nuevo hacia atrás
-        centinela->siguiente = nuevo;             // el centinela apunta al nuevo como siguiente
-        nuevo->anterior = centinela;              // el nuevo apunta hacia atrás al centinela
-
-        tamano++;                                 // se incrementa el tamaño
-    }
-
-    // Quita el primer elemento de la lista y devuelve su valor.
-    T PopFront()
-    {
-        if (tamano == 0)  // si la lista está vacía
-        {
-            cout << "No se puede quitar el primero porque la lista está vacía." << endl;
-            return T{};
-        }
-
-        Elemento* borrar = centinela->siguiente;  // el primer elemento está después del centinela
-        T valor = borrar->dato;                   // guardamos su valor
-        EliminarElemento(borrar);                 // lo eliminamos
-        return valor;                             // devolvemos el valor quitado
-    }
-
-    // Devuelve el primer valor sin eliminarlo.
+    // Front: regresa el valor del PRIMERO sin quitarlo.
     T Front()
     {
-        if (tamano == 0)
+        if (count == 0)
         {
-            cout << "La lista está vacía, no hay elementos al inicio." << endl;
+            cout << "Error, trataron de sacar el front de una lista vacía." << endl;
             return T{};
         }
-        return centinela->siguiente->dato; // devuelve el valor del primer elemento
+        // El primero real siempre es NIL->next.
+        return NIL->next->data;
     }
 
-    // Devuelve el último valor sin eliminarlo.
+    // Back: regresa el valor del ÚLTIMO sin quitarlo.
     T Back()
     {
-        if (tamano == 0)
+        if (count == 0)
         {
-            cout << "La lista está vacía, no hay elementos al final." << endl;
+            cout << "Error, trataron de sacar el Back de una lista vacía." << endl;
             return T{};
         }
-        return centinela->anterior->dato; // devuelve el valor del último elemento
+        // El último real siempre es NIL->prev.
+        return NIL->prev->data;
     }
 
-    // Revisa si un valor está dentro de la lista.
-    bool Contiene(T valor)
+    // Contains: busca el primer nodo con "value". True si lo encuentra.
+    bool Contains(T value)
     {
-        Elemento* encontrado = Buscar(valor);  // busca el valor
-        return (encontrado != nullptr);        // devuelve true si lo encontró
+        Node* nodoEncontrado = Search(value); // recorre desde NIL->next hasta NIL
+        // Si regresa nullptr, NO está; en otro caso, SÍ está.
+        if (nodoEncontrado == nullptr)
+            return false;
+        return true;
+        // (equivalente) return nodoEncontrado != nullptr;
     }
 
-    // Devuelve el valor que está en cierta posición (0, 1, 2…)
-    T ObtenerPorIndice(size_t indice)
+    // ObtenerValorPorIndice: regresa el dato en la posición [0..count-1] desde el inicio.
+    T ObtenerValorPorIndice(size_t indice)
     {
-        if (indice >= tamano)  // si el número es mayor al tamaño actual
+        // Validación: índice fuera de rango.
+        if (indice >= count)
         {
-            cout << "El número de posición no es válido: " << indice << endl;
+            cout << "Error, trataron de acceder a un índice inválido:" << indice << endl;
             return T{};
         }
 
-        Elemento* actual = centinela->siguiente;  // empezamos desde el primer elemento
-        for (int i = 0; i < indice; i++)          // avanzamos hasta el lugar indicado
-            actual = actual->siguiente;
+        // Recorremos "indice" pasos a partir del primero.
+        Node* nodoActual = NIL->next;
+        for (int i = 0; i < indice; i++)
+            nodoActual = nodoActual->next;
 
-        return actual->dato;                      // devolvemos el valor encontrado
+        return nodoActual->data;
     }
-
-    // Borra el primer elemento que tenga el valor indicado.
-    void BorrarPorValor(T valor)
-    {
-        Elemento* borrar = Buscar(valor);  // buscamos el valor dentro de la lista
-        if (borrar == nullptr)             // si no se encuentra
-        {
-            cout << "No se encontró el valor: " << valor << endl;
-            return;
-        }
-
-        EliminarElemento(borrar);          // si se encuentra, se borra
-    }
-
-private:
-    // Clase que representa cada elemento de la lista.
-    class Elemento
-    {
-    public:
-        Elemento(T _dato)
-        {
-            dato = _dato;          // se guarda el dato dentro del elemento
-            siguiente = nullptr;   // al principio no apunta a nadie
-            anterior = nullptr;    // tampoco apunta a nadie hacia atrás
-        }
-
-        T dato;                 // el valor del elemento
-        Elemento* siguiente;    // dirección del siguiente elemento
-        Elemento* anterior;     // dirección del anterior elemento
-    };
-
-    // Busca un valor dentro de la lista.
-    // Si no lo encuentra, devuelve nullptr.
-    Elemento* Buscar(T valor)
-    {
-        Elemento* actual = centinela->siguiente;  // empezamos desde el primer elemento
-
-        while (actual != centinela)               // recorremos la lista
-        {
-            if (actual->dato == valor)            // si encontramos el valor
-                return actual;                    // devolvemos la posición
-            actual = actual->siguiente;           // avanzamos al siguiente
-        }
-
-        return nullptr;                           // si no lo encontramos
-    }
-
-    // Elimina un elemento y reconecta los de alrededor.
-    void EliminarElemento(Elemento* borrar)
-    {
-        borrar->anterior->siguiente = borrar->siguiente; // el de atrás apunta al siguiente
-        borrar->siguiente->anterior = borrar->anterior; // el de adelante apunta al de atrás
-        delete borrar;                                  // liberamos la memoria del eliminado
-        tamano--;                                       // reducimos el tamaño
-    }
-
-    Elemento* centinela; // nodo especial que marca el inicio y el final
-    int tamano;          // cantidad de elementos que tiene la lista
-};
-
-// Declaración de la función de demostración (definida en el .cpp)
-void DemostracionSentinelLinkedList();
