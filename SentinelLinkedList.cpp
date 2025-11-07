@@ -8,63 +8,72 @@
 // Se deja solo para mantener el proyecto completo y organizado, tal como se pidió en la práctica.
 // Alumnos: Cecilia Romero Granados, Alexis Jeshua Arrona
 
-#include "SentinelLinkedList.h"
+#include "SentinelLinkedList.h" // Incluimos el archivo con la clase de la lista
 
-// Esta función sirve para probar el funcionamiento de la lista con centinela.
-// Se agregan, eliminan y muestran elementos para comprobar que todo funcione bien.
+// Esta función muestra cómo funcionan las operaciones básicas de la lista con centinela
 void DemostracionSentinelLinkedList()
 {
-    // Se crea una lista vacía de tipo string
-    SentinelLinkedList<string> lista;
+    // Se crea una lista vacía que guarda cadenas de texto (strings)
+    SentinelLinkedList<string> miLista;
 
-    cout << "Agregando nombres al final de la lista..." << endl;
-    lista.Append("Juan");   // agrega "Juan" al final
-    lista.Append("Maria");  // agrega "Maria" al final
-    lista.Append("Pedro");  // agrega "Pedro" al final
+    // Se agregan tres nombres al final de la lista
+    miLista.Append("Juan");   // Agrega "Juan"
+    miLista.Append("Maria");  // Agrega "Maria"
+    miLista.Append("Pedro");  // Agrega "Pedro"
 
-    // Mostramos el primer y último elemento
-    cout << "Primer elemento: " << lista.Front() << endl;
-    cout << "Último elemento: " << lista.Back() << endl;
+    // Se revisa si la lista contiene ciertos valores
+    if (miLista.Contiene("Maria")) // Si la lista contiene "Maria"
+        cout << "La lista con centinela SÍ contiene a Maria" << endl;
+    else
+        cout << "La lista con centinela NO contiene a Maria" << endl;
 
-    // Buscamos si un nombre existe dentro de la lista
-    cout << "¿La lista contiene 'Maria'? ";
-    cout << (lista.Contiene("Maria") ? "Sí, está en la lista." : "No, no está.") << endl;
+    // Se busca un nombre que no existe en la lista
+    if (miLista.Contiene("Juancho")) // Si encuentra "Juancho"
+        cout << "La lista con centinela SÍ contiene a Juancho" << endl;
+    else
+        cout << "La lista con centinela NO contiene a Juancho" << endl;
 
-    cout << "¿La lista contiene 'Luis'? ";
-    cout << (lista.Contiene("Luis") ? "Sí, está en la lista." : "No, no está.") << endl;
+    // Se obtiene el valor del primer elemento usando su posición 
+    cout << "El valor en la posición 0 es: " << miLista.ObtenerPorIndice(0) << endl;
 
-    // Agregamos elementos al inicio de la lista
-    cout << "Agregando nombres al principio..." << endl;
-    lista.PushFront("Ana");     // se agrega "Ana" al inicio
-    lista.PushFront("Carlos");  // se agrega "Carlos" al inicio
+    // Se prueban eliminaciones desde el final 
+    cout << "Quitando del final (PopBack): " << miLista.PopBack() << " (esperado: Pedro)" << endl;
+    cout << "Quitando del final (PopBack): " << miLista.PopBack() << " (esperado: Maria)" << endl;
+    cout << "Quitando del final (PopBack): " << miLista.PopBack() << " (esperado: Juan)" << endl;
 
-    // Mostramos el nuevo primer elemento
-    cout << "El primer elemento ahora es: " << lista.Front() << endl;
+    // Intentamos quitar otro elemento cuando ya está vacía (debe mostrar un mensaje de error)
+    cout << "Probando PopBack con lista vacía:" << endl;
+    miLista.PopBack(); // Aquí se muestra el mensaje de error porque no hay elementos
 
-    // Quitamos el primer elemento y mostramos el resultado
-    cout << "Quitando el primer elemento..." << endl;
-    cout << "Elemento eliminado: " << lista.PopFront() << endl;
-    cout << "El nuevo primer elemento es: " << lista.Front() << endl;
+    // Se crea otra lista solo para comprobar que el destructor borra correctamente los nodos
+    SentinelLinkedList<string> listaTemporal; // Nueva lista vacía
+    listaTemporal.Append("Elemento temporal"); // Agregamos un elemento temporal
 
-    // Quitamos el último elemento y mostramos el resultado
-    cout << "Quitando el último elemento..." << endl;
-    cout << "Elemento eliminado: " << lista.PopBack() << endl;
-    cout << "El nuevo último elemento es: " << lista.Back() << endl;
+    // A partir de aquí se prueba la parte que pertenece a la Tarea 2 del segundo parcial
 
-    // Eliminamos un nombre específico de la lista
-    cout << "Eliminando el nombre 'Maria'..." << endl;
-    lista.BorrarPorValor("Maria");
+    // Se crea una nueva lista con varios elementos iniciales
+    SentinelLinkedList<string> listaTarea2;
+    listaTarea2.Append("Ana");    // Agregamos "Ana"
+    listaTarea2.Append("Luis");   // Agregamos "Luis"
+    listaTarea2.Append("Carlos"); // Agregamos "Carlos"
 
-    // Probamos obtener elementos por posición
-    cout << "Buscando elementos por posición..." << endl;
-    cout << "Elemento en la posición 0: " << lista.ObtenerPorIndice(0) << endl;
-    lista.ObtenerPorIndice(5); // este índice no existe, mostrará un mensaje de error
+    // Se muestra cuál es el primer elemento actual
+    cout << "Primer elemento actual (esperado: Ana): " << listaTarea2.Front() << endl;
 
-    // Vaciamos completamente la lista
-    cout << "Eliminando todos los elementos restantes..." << endl;
-    cout << "Eliminado: " << lista.PopBack() << endl;
-    cout << "Eliminado: " << lista.PopBack() << endl;
-    lista.PopBack(); // la lista ya está vacía, mostrará un mensaje
+    // Probamos la función PushFront (agrega un elemento al inicio de la lista)
+    cout << "Agregando 'Sofia' al frente con PushFront..." << endl;
+    listaTarea2.PushFront("Sofia"); // Inserta "Sofia" al principio
 
-    cout << "Fin de la demostración de la lista con centinela." << endl;
+    // Verificamos que ahora el primer elemento sea "Sofia"
+    cout << "Nuevo primer elemento (esperado: Sofia): " << listaTarea2.Front() << endl;
+
+    // Probamos la función PopFront (elimina el primer elemento de la lista)
+    cout << "Quitando el primer elemento con PopFront..." << endl;
+    cout << "Elemento eliminado (esperado: Sofia): " << listaTarea2.PopFront() << endl;
+
+    // Mostramos nuevamente el primer elemento para confirmar que "Sofia" fue eliminada
+    cout << "Primer elemento después del PopFront (esperado: Ana): " << listaTarea2.Front() << endl;
+
+    // Cuando esta función termine, los destructores se ejecutarán automáticamente
+    // y se eliminarán todas las listas creadas, mostrando su mensaje en consola.
 }
